@@ -8,6 +8,8 @@
 
 #import "AppDelegate.h"
 
+#import "FBHandler.h"
+
 @implementation AppDelegate
 
 @synthesize managedObjectContext = _managedObjectContext;
@@ -16,10 +18,6 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-    self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-    // Override point for customization after application launch.
-    self.window.backgroundColor = [UIColor whiteColor];
-    [self.window makeKeyAndVisible];
     return YES;
 }
 
@@ -43,7 +41,26 @@
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+    [FBAppCall handleDidBecomeActive];
 }
+
+// During the Facebook login flow, your app passes control to the Facebook iOS app or Facebook in a mobile browser.
+// After authentication, your app will be called back with the session information.
+- (BOOL)application:(UIApplication *)application
+            openURL:(NSURL *)url
+  sourceApplication:(NSString *)sourceApplication
+         annotation:(id)annotation
+{
+    // Note this handler block should be the exact same as the handler passed to any open calls.
+    [FBSession.activeSession setStateChangeHandler:
+     ^(FBSession *session, FBSessionState state, NSError *error) {
+         [[FBHandler sharedInstance] sessionStateChanged:session state:state error:error];
+     }];
+    return [FBAppCall handleOpenURL:url sourceApplication:sourceApplication];
+}
+
+
+
 
 - (void)applicationWillTerminate:(UIApplication *)application
 {
